@@ -1,6 +1,5 @@
 <script>
 	import Upload from './Upload.svelte';
-	// import Map from './Map.svelte'
 </script>
 
 <main>

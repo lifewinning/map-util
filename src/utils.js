@@ -78,29 +78,12 @@ export const getClass = d => {
   return `${kind.replace('_','')}`;
 }
 
-export const style = (t) => {
-    const sg = Object.entries(styleguide())
-    //todo: boundary style stuff
-    let st; 
-    if (t.properties.kind){
-      if (t.properties.boundary){
-       st = sg.filter(s => s[0] == `${t.properties.kind.replace('_','')}boundary`)
-      }else{
-       st = sg.filter(s => s[0] == t.properties.kind.replace('_','')) 
-      }    
-      if (st.length > 0){
-        return st[0][1]
-      }
-    }
-}
-
 export const sortTileData = (ti, rawdata) => {
   const tiles = ti.map(tile => {
     const mapTile = zenArray(tile).map(d => ({
       class: getClass(d),
       data: d
     }))
-    
     rawdata.push(mapTile)
    let flat =  mapTile.flat().sort((a, b) => (
       a.data.properties.sort_rank ?
