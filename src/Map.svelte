@@ -4,27 +4,47 @@ import Palette from './Palette.svelte';
 import * as d3 from 'd3';
 import { projections, getTiles, sortTileData, tilePromise } from './utils'
 export let data, height, width, proj;
-let projection, path, tile, svg, getPaths, z;
+let projection, path, tile, svg, z;
+let arr = [];
+let classes=''
+let seePalette = false;
 
 // to do: "cache" tiles, drag and zoom
 let m = { x: 0, y: 0};
 let sphere = ({type: "Sphere"})
-// onMount(async () => {
-//   let pathSet = new Set (Array.from(document.querySelectorAll('path')).map(m => m.getAttribute('class')))
-//   getPaths = [...pathSet]
-// })
+
+async function tiles() {
+       return tilePromise(getTiles(projection, width, height)).then(t => sortTileData(t, arr))
+    }
+
+onMount(async () => {
+  
+  let classSet = new Set();
+  await tiles().then(t => t.map(ti => classSet.add(ti.class)))
+  classes = [...classSet].map(c => {
+    let el = document.querySelector(`.${c}`)
+    if (el){ 
+      let style = getComputedStyle(el)
+      let obj = ({
+      name : c,
+      fill: style.fill,
+      stroke: style.stroke, 
+      strokeWidth: style.strokeWidth
+      })
+    return obj; 
+    }
+
+  })  
+})
 
 
 $: {
-  let arr = []
+  arr = []
   projection = projections(data,width,height).map(p => Object.entries(p)).filter(m => m[0][0] == proj)[0][0][1]
   path = d3.geoPath().projection(projection)
-  async function tiles() {
-        return tilePromise(getTiles(projection, width, height)).then(t => sortTileData(t, arr))
-    }
   tile = tiles()
-    z = getTiles(projection, width, height);
-  console.log(z[0].z)
+  z = getTiles(projection, width, height);
+  // console.log(z[0].z)
 
 }
 
@@ -32,12 +52,17 @@ $: {
 <style>
     div { margin: 2px; }
     svg { border: 1px dotted;}
-
+#basemap{
+  stroke-width: none;
+  fill:none;
+}
 .upload {
   fill: var(--upload-fill, none);
   stroke: var(--upload-stroke, chartreuse);
   stroke-width: 4px;
 }
+.building{
+  fill:rgb(165, 139, 139);}
 
 .water,.ocean, .riverbank  {
   fill: var(--water-fill, gray);
@@ -111,11 +136,13 @@ $: {
 </style>
 <div width = {width}>
 <svg bind:this={svg} width = {width} height ={height} on:mousemove="{e => m = { x: e.clientX, y: e.clientY }}" on:>
-     {#if z[0].z <= 5}
+    {#if z[0]}
+    {#if z[0].z <= 5}
     <g id = "water">
-      <path class = "ocean" d = { path(sphere) }  /> 
+    <path class = "ocean" d = { path(sphere) }  /> 
     </g>
     {/if}  
+    {/if}
     {#await tile then t}
     <g id = 'basemap'>
     {#each t as paths}
@@ -126,8 +153,14 @@ $: {
     <path d = {path(data)} class="upload"/>
 </svg>
 <hr>
-
+<button on:click={() => seePalette = !seePalette}>Color Palette</button>
+{#if seePalette == true}
+{#await classes then c}
+<!-- {JSON.stringify(c)} -->
+<Palette classNames = {c} svg={svg}/>
+{/await}
+{/if}
 <!-- todo! -->
-<Palette width = {width}/>
+
 <!-- <button>svg (axidraw)</button> <button>svg (PW laser)</button><button>svg (print)</button> -->
 </div>

@@ -6,6 +6,18 @@ export let data;
 let height = 400;
 let width = 400;
 </script>
+<style>
+    pre{
+        padding: 2px;
+        background-color: papayawhip;
+        white-space: pre-wrap;
+    }
+    .feat{
+        width: min-content;
+        margin:2px;
+        padding: 2px;;
+    }
+</style>
 
 <!-- Actual Settings for Maps -->
 
@@ -22,19 +34,22 @@ let width = 400;
 <input id="m2" type="checkbox" name="manymaps" bind:checked={manyMaps}/> Map Each Feature
 
 <hr>
+
 <!-- Maps Load Here! -->
 {#if oneMap}
-    <div class='map' style="display:flex; flex-wrap: wrap; flex-direction: row;">
+    <div class='map' style="display:flex; flex-wrap: wrap; flex-direction: row; justify-content: space-evenly;">
+    <div class="feat">
     <Map data={data} height = {height} width = {width} proj = {projselect}/>
+</div>
     </div>
 {/if}
 {#if manyMaps}
-    <div class='map' style="display:flex; flex-wrap: wrap; flex-direction: row;">
+    <div class='map' style="display:flex; flex-wrap: wrap; flex-direction: row; justify-content: space-evenly;">
     {#if data.features}
         {#each data.features as feature}
-        <div> 
+        <div class="feat"> 
             {#if feature.properties }
-            <pre>{JSON.stringify(feature.properties)}</pre>
+            <pre>{JSON.stringify(feature.properties,null,2)}</pre>
             {/if}
             <Map data = {feature} height = {height} width = {width} proj = {projselect}/>
            

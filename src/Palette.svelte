@@ -1,47 +1,85 @@
 <script>
-    import { onMount } from 'svelte';
+    import { onMount } from 'svelte'; 
+    import Colorpicker from "@budibase/colorpicker";
     import textures from "textures"; 
     import * as d3 from 'd3';
-    let svg;
-    export let width
+   export let classNames, svg;
 
-let swatches = [
-    textures.lines().size(8).strokeWidth(2), textures.lines().size(4).strokeWidth(1), textures.lines().orientation('3/8'),textures.lines().orientation('3/8', '7/8'), textures.lines().orientation('vertical','horizontal').size(4).strokeWidth(1), textures.lines().orientation('diagonal').size(7).strokeWidth(2).background('gray').stroke('white'), textures.circles().heavier(), textures.circles().thicker(), textures.circles().radius(5).fill('transparent').strokeWidth(1), textures.paths().d('hexagons').size(8), textures.paths().d('woven'), textures.paths().d('waves')
-]
+
+// helper functions for making styles
+
+async function ChangeColor(className, newColor, item){
+    let selected = await svg.querySelectorAll(`.${className}`)
+    selected.forEach(element => {
+        element.style.setProperty('fill', newColor)
+        console.log(element)
+    });
+}
+
 onMount(async ()=> {
-    swatches.map(s => d3.select(svg).call(s))
+    // console.log(await Object.entries(classNames).map(c => Array.from(svg.querySelectorAll(`.${c[1].name}`).length)))
 })
+
 </script>
 <style>
-    #textures {
+
+    #pickers {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    grid-template-rows: repeat(2, 1fr);
+
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(1, 1fr);
     grid-column-gap: 2px;
     grid-row-gap: 2px;
     }
 
 </style>
-
-<div id='textures' width={width}>
-{#each swatches as swatch}
-<span style="margin:1px;">
-<svg bind:this={svg}  width=45 height=45>
-<circle cx="25" cy="25" r="20" style="stroke:black; stroke-weight:.5px;" fill={swatch.url()}/>  
-</svg>
-</span>
-{/each}
+{#await classNames then cn}
+{#each cn as c}
+<pre><em>{c.name}</em></pre>
+<div id ="pickers">
+    <div>
+       <pre>fill:</pre>
+{#if c.fill == 'none'}
+<Colorpicker
+      value='rgba(255,255,255,0)' 
+      disableSwatches={true} 
+      width="40px" 
+      height="40px"
+      on:change={selectedColor => {}}/> 
+{:else}
+        <Colorpicker
+            value={c.fill} 
+            disableSwatches={true} 
+            width="40px" 
+            height="40px"
+            on:change={selectedColor => {ChangeColor(c.name,selectedColor.detail,'fill')}}/> 
+        {/if}
+    </div>
+    <div>
+       <pre>stroke:</pre>
+       {#if c.stroke == 'none'}
+       <Colorpicker
+             value='rgba(255,255,255,0)' 
+             disableSwatches={true} 
+             width="40px" 
+             height="40px"
+             on:change={selectedColor => {}}/> 
+       {:else}
+       <Colorpicker
+             value={c.stroke} 
+             disableSwatches={true} 
+             width="40px" 
+             height="40px"
+             on:change={selectedColor => {}}/> 
+       {/if}
+    </div>
+    <div>
+       <pre>stroke weight:</pre>
+    <input width="40px" type="number" value={c.strokeWidth.split('p')[0]}/> 
+    </div>
 </div>
-<!-- Laser Cutter Palette:
- - 255 0 0 (red): cut (no fills!)
- - 0 0 255 (blue): dark engrave
- - 0 0 0 (black): light engrave
- - lines are 0.1px stroke
- - Pattern fills? 
--->
+{/each}
+{/await}
 
-<!-- Axidraw Palette:
-- Pattern fills
-- lots of outlines
-- 
--->
+
+
