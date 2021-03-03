@@ -1,6 +1,6 @@
 <script>
 import Map from './Map.svelte'
-let oneMap, manyMaps, projselect, featselect;
+let oneMap, manyMaps, projselect;
 import { projections } from './utils.js'
 export let data; 
 let height = 400;
@@ -51,8 +51,7 @@ let width = 400;
             {#if feature.properties }
             <pre>{JSON.stringify(feature.properties,null,2)}</pre>
             {/if}
-            <Map data = {feature} height = {height} width = {width} proj = {projselect}/>
-           
+            <Map data = {feature} height = {height} width = {width} proj = {projselect}/>      
         </div>
         {/each}
     {/if}

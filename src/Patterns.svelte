@@ -2,8 +2,8 @@
 import { onMount } from 'svelte'; 
 import textures from "textures"; 
 import * as d3 from 'd3';
-let svg;
-export let classNames;
+let palette;
+export let classNames, svg;
 
 let swatches = [
     textures.lines().size(8).strokeWidth(2), 
@@ -16,7 +16,7 @@ let swatches = [
 ]
 
 onMount(async ()=> {
-    swatches.map(s => d3.select(svg).call(s))
+    swatches.map(s => d3.select(palette).call(s))
     //classNames = Array.from(svg.querySelectorAll('path')).map(m=> m.classList)
 })
 
@@ -32,10 +32,13 @@ onMount(async ()=> {
  }
 
 </style>
+{#await classNames then cn}
+
+{/await}
 <div id='textures'>
     {#each swatches as swatch}
     <span style="margin:1px;">
-    <svg bind:this={svg}  width=45 height=45>
+    <svg bind:this={palette}  width=45 height=45>
     <circle cx="25" cy="25" r="20" style="stroke:black; stroke-weight:.5px;" fill={swatch.url()}/>  
     </svg>
     </span>

@@ -5,6 +5,9 @@
     export let classNames;
 </script>
 
+{#await classNames then cn}
+{/await}
+
 <!-- Laser Cutter Palette:
  - 255 0 0 (red): cut (no fills!)
  - 0 0 255 (blue): dark engrave

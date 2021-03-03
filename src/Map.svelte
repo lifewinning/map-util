@@ -6,7 +6,7 @@ import { projections, getTiles, sortTileData, tilePromise } from './utils'
 export let data, height, width, proj;
 let projection, path, tile, svg, z;
 let arr = [];
-let classes=''
+let classes=[]
 let seePalette = false;
 
 // to do: "cache" tiles, drag and zoom
@@ -18,24 +18,114 @@ async function tiles() {
     }
 
 onMount(async () => {
-  
   let classSet = new Set();
   await tiles().then(t => t.map(ti => classSet.add(ti.class)))
+
+
   classes = [...classSet].map(c => {
     let el = document.querySelector(`.${c}`)
     if (el){ 
       let style = getComputedStyle(el)
       let obj = ({
       name : c,
+      group: el.dataset.group,
       fill: style.fill,
       stroke: style.stroke, 
       strokeWidth: style.strokeWidth
       })
     return obj; 
     }
+  })
 
-  })  
-})
+  if (document.querySelector('#sphere')) {
+    let el = document.querySelector(`.ocean`)
+    if (el){ 
+      let style = getComputedStyle(el)
+      let obj = ({
+      name : 'ocean',
+      group: 'water',
+      fill: style.fill,
+      stroke: style.stroke, 
+      strokeWidth: style.strokeWidth
+      })
+    classes.push(obj)
+    }
+  }
+
+  
+})  
+
+  const makeSVG = (svg, classes)=>{
+      const styles = classes
+      const groups = {}
+      let copySVG = document.createElement('svg')
+
+      copySVG.width=width
+      copySVG.height=height
+      
+      styles.forEach(element => {
+        let selected = Array.from(svg.querySelectorAll(`.${element.name}`)).filter(s => s.getAttribute('d') != null)
+        if (typeof(selected[0]) != undefined && selected[0] != null){
+            let sample = selected[0]
+            let className = element.name
+            let getStyle = getComputedStyle(sample)
+            let groupName = selected[0].dataset.group
+            if (groupName != undefined && className != undefined){
+            selected.forEach(select =>{
+              // console.log(selected[0].dataset.group)
+              // console.log(select.dataset.group)
+              if (!groups[groupName]){
+                groups[groupName] = {};
+              } 
+              if (!groups[groupName][className]){
+
+              groups[groupName][className] = []
+              groups[groupName][className].push(`<path d=${select.getAttribute('d')} fill="${getStyle.fill}" stroke="${getStyle.stroke}"  stroke-width="${getStyle.strokeWidth}"></path>`)
+            
+            } else{
+              groups[groupName][className].push(`<path d=${select.getAttribute('d')} fill="${getStyle.fill}" stroke="${getStyle.stroke}"  stroke-width="${getStyle.strokeWidth}"></path>`)
+            }
+          })
+            }
+          
+        }
+          });
+      console.log(Object.entries(groups))
+
+      Object.entries(groups).forEach(g =>{
+        console.log(g[1])
+        console.log(Object.entries(g[1]))
+        copySVG.insertAdjacentHTML('afterbegin', 
+        `<g id=${g[0]}>
+
+        ${Object.entries(g[1]).map(c => `<g id = ${c[0]}> ${c[1].join(' ')} </g>`)}  
+        </g>`)
+      })
+      let upload = svg.querySelector('.upload')
+      let style = getComputedStyle(upload)
+      if (typeof(upload) != undefined && upload != null){   
+        let uploaded = `<g id ="uploaded"><path d="${upload.getAttribute('d')}" fill ="${style.fill}" stroke="${style.stroke}" stroke-width="${style.strokeWidth}"></path></g>` 
+        copySVG.insertAdjacentHTML('beforeend', uploaded);
+      }
+      
+      let globe = svg.querySelector('#sphere')
+      if (globe){
+        const sphere = `<g id ="globe"><path class = "sphere" d="${path({type: "Sphere"})}" fill = "${getComputedStyle(globe).fill}" stroke="${getComputedStyle(globe).stroke}" stroke-width="${getComputedStyle(globe).strokeWidth}"/></g>` 
+      copySVG.insertAdjacentHTML('afterbegin', sphere);
+      }
+
+      return copySVG.innerHTML
+ }
+
+const download = (svgFile) => {
+      const svgText = `<svg xmlns="http://www.w3.org/2000/svg">${svgFile}</svg>`;
+      const blob = new Blob([svgText], { type: 'text/xml' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a')
+      link.setAttribute('href', url)
+      link.setAttribute('download', 'map.svg')
+      link.click()
+    }
 
 
 $: {
@@ -44,11 +134,11 @@ $: {
   path = d3.geoPath().projection(projection)
   tile = tiles()
   z = getTiles(projection, width, height);
-  // console.log(z[0].z)
 
 }
 
 </script>
+
 <style>
     div { margin: 2px; }
     svg { border: 1px dotted;}
@@ -139,27 +229,29 @@ $: {
     {#if z[0]}
     {#if z[0].z <= 5}
     <g id = "water">
-    <path class = "ocean" d = { path(sphere) }  /> 
+    <path class = "ocean" id= "sphere" d = { path(sphere) }  /> 
     </g>
     {/if}  
     {/if}
     {#await tile then t}
     <g id = 'basemap'>
     {#each t as paths}
-    <path d = {path(paths.data)} class={paths.class}/>
+    <path d = {path(paths.data)} data-group={paths.group} class={paths.class}/>
     {/each}
     </g>
     {/await}
     <path d = {path(data)} class="upload"/>
 </svg>
 <hr>
+
 <button on:click={() => seePalette = !seePalette}>Color Palette</button>
-{#if seePalette == true}
 {#await classes then c}
-<!-- {JSON.stringify(c)} -->
+<button on:click={()=> download(makeSVG(svg,c))}>download SVG</button>
+{#if seePalette == true}
 <Palette classNames = {c} svg={svg}/>
-{/await}
 {/if}
+{/await}
+
 <!-- todo! -->
 
 <!-- <button>svg (axidraw)</button> <button>svg (PW laser)</button><button>svg (print)</button> -->
