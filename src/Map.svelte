@@ -96,7 +96,7 @@ onMount(async () => {
         console.log(g[1])
         console.log(Object.entries(g[1]))
         copySVG.insertAdjacentHTML('afterbegin', 
-        `<g id=${g[0]}>
+        `<g id=${g[0]} inkscape:groupmode="layer" inkscape:label="${g[0]}">
 
         ${Object.entries(g[1]).map(c => `<g id = ${c[0]}> ${c[1].join(' ')} </g>`)}  
         </g>`)
@@ -104,13 +104,13 @@ onMount(async () => {
       let upload = svg.querySelector('.upload')
       let style = getComputedStyle(upload)
       if (typeof(upload) != undefined && upload != null){   
-        let uploaded = `<g id ="uploaded"><path d="${upload.getAttribute('d')}" fill ="${style.fill}" stroke="${style.stroke}" stroke-width="${style.strokeWidth}"></path></g>` 
+        let uploaded = `<g id ="uploaded" inkscape:groupmode="layer" inkscape:label="uploaded"><path d="${upload.getAttribute('d')}" fill ="${style.fill}" stroke="${style.stroke}" stroke-width="${style.strokeWidth}"></path></g>` 
         copySVG.insertAdjacentHTML('beforeend', uploaded);
       }
       
       let globe = svg.querySelector('#sphere')
       if (globe){
-        const sphere = `<g id ="globe"><path class = "sphere" d="${path({type: "Sphere"})}" fill = "${getComputedStyle(globe).fill}" stroke="${getComputedStyle(globe).stroke}" stroke-width="${getComputedStyle(globe).strokeWidth}"/></g>` 
+        const sphere = `<g id ="globe" inkscape:groupmode="layer" inkscape:label="sphere"><path class = "sphere" d="${path({type: "Sphere"})}" fill = "${getComputedStyle(globe).fill}" stroke="${getComputedStyle(globe).stroke}" stroke-width="${getComputedStyle(globe).strokeWidth}"/></g>` 
       copySVG.insertAdjacentHTML('afterbegin', sphere);
       }
 
@@ -118,7 +118,7 @@ onMount(async () => {
  }
 
 const download = (svgFile) => {
-      const svgText = `<svg xmlns="http://www.w3.org/2000/svg">${svgFile}</svg>`;
+      const svgText = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape">${svgFile}</svg>`;
       const blob = new Blob([svgText], { type: 'text/xml' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a')
