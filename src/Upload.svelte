@@ -2,11 +2,7 @@
     // import { onMount } from 'svelte';
 // import Map from './Map.svelte';
 import Settings from './Settings.svelte'
-
-
-
-	let files, data;
-
+	let files;
 </script>
 
 <main>

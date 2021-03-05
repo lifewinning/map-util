@@ -2,12 +2,11 @@
 import { onMount } from 'svelte';
 import Palette from './Palette.svelte';
 import * as d3 from 'd3';
-import { projections, getTiles, sortTileData, tilePromise } from './utils'
+import { projections, getTiles, sortTileData, tilePromise, makeSVG } from './utils'
 export let data, height, width, proj;
 let projection, path, tile, svg, z;
 let arr = [];
 let classes=[]
-let seePalette = false;
 
 // to do: "cache" tiles, drag and zoom
 let m = { x: 0, y: 0};
@@ -55,67 +54,6 @@ onMount(async () => {
   
 })  
 
-  const makeSVG = (svg, classes)=>{
-      const styles = classes
-      const groups = {}
-      let copySVG = document.createElement('svg')
-
-      copySVG.width=width
-      copySVG.height=height
-      
-      styles.forEach(element => {
-        let selected = Array.from(svg.querySelectorAll(`.${element.name}`)).filter(s => s.getAttribute('d') != null)
-        if (typeof(selected[0]) != undefined && selected[0] != null){
-            let sample = selected[0]
-            let className = element.name
-            let getStyle = getComputedStyle(sample)
-            let groupName = selected[0].dataset.group
-            if (groupName != undefined && className != undefined){
-            selected.forEach(select =>{
-              // console.log(selected[0].dataset.group)
-              // console.log(select.dataset.group)
-              if (!groups[groupName]){
-                groups[groupName] = {};
-              } 
-              if (!groups[groupName][className]){
-
-              groups[groupName][className] = []
-              groups[groupName][className].push(`<path d=${select.getAttribute('d')} fill="${getStyle.fill}" stroke="${getStyle.stroke}"  stroke-width="${getStyle.strokeWidth}"></path>`)
-            
-            } else{
-              groups[groupName][className].push(`<path d=${select.getAttribute('d')} fill="${getStyle.fill}" stroke="${getStyle.stroke}"  stroke-width="${getStyle.strokeWidth}"></path>`)
-            }
-          })
-            }
-          
-        }
-          });
-      console.log(Object.entries(groups))
-
-      Object.entries(groups).forEach(g =>{
-        console.log(g[1])
-        console.log(Object.entries(g[1]))
-        copySVG.insertAdjacentHTML('afterbegin', 
-        `<g id=${g[0]} inkscape:groupmode="layer" inkscape:label="${g[0]}">
-
-        ${Object.entries(g[1]).map(c => `<g id = ${c[0]}> ${c[1].join(' ')} </g>`)}  
-        </g>`)
-      })
-      let upload = svg.querySelector('.upload')
-      let style = getComputedStyle(upload)
-      if (typeof(upload) != undefined && upload != null){   
-        let uploaded = `<g id ="uploaded" inkscape:groupmode="layer" inkscape:label="uploaded"><path d="${upload.getAttribute('d')}" fill ="${style.fill}" stroke="${style.stroke}" stroke-width="${style.strokeWidth}"></path></g>` 
-        copySVG.insertAdjacentHTML('beforeend', uploaded);
-      }
-      
-      let globe = svg.querySelector('#sphere')
-      if (globe){
-        const sphere = `<g id ="globe" inkscape:groupmode="layer" inkscape:label="sphere"><path class = "sphere" d="${path({type: "Sphere"})}" fill = "${getComputedStyle(globe).fill}" stroke="${getComputedStyle(globe).stroke}" stroke-width="${getComputedStyle(globe).strokeWidth}"/></g>` 
-      copySVG.insertAdjacentHTML('afterbegin', sphere);
-      }
-
-      return copySVG.innerHTML
- }
 
 const download = (svgFile) => {
       const svgText = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape">${svgFile}</svg>`;
@@ -243,13 +181,9 @@ $: {
     <path d = {path(data)} class="upload"/>
 </svg>
 <hr>
-
-<button on:click={() => seePalette = !seePalette}>Color Palette</button>
 {#await classes then c}
-<button on:click={()=> download(makeSVG(svg,c))}>download SVG</button>
-{#if seePalette == true}
-<Palette classNames = {c} svg={svg}/>
-{/if}
+<button on:click={()=> download(makeSVG(svg, c, width, height,path))}>download SVG</button>
+<Palette c={c} svg = {svg}/>
 {/await}
 
 <!-- todo! -->

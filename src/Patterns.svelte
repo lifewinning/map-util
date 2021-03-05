@@ -15,6 +15,14 @@ let swatches = [
     textures.circles().heavier().radius(3), textures.circles().thicker(), textures.circles().radius(3).fill('transparent').strokeWidth(1), textures.paths().d('hexagons').size(5), textures.paths().d('woven'), textures.paths().d('waves')
 ]
 
+let addPattern = async (className, newPattern) => {
+    d3.select(svg).call(newPattern);
+    let selected = await svg.querySelectorAll(`.${className}`)
+    selected.forEach(element => {
+        element.style.setProperty('fill', newPattern.url())
+    });
+}
+
 onMount(async ()=> {
     swatches.map(s => d3.select(palette).call(s))
     //classNames = Array.from(svg.querySelectorAll('path')).map(m=> m.classList)
@@ -33,14 +41,18 @@ onMount(async ()=> {
 
 </style>
 {#await classNames then cn}
-
-{/await}
-<div id='textures'>
+{#each cn as c}
+<div><pre><strong>{c.name}</strong></pre>
     {#each swatches as swatch}
     <span style="margin:1px;">
-    <svg bind:this={palette}  width=45 height=45>
-    <circle cx="25" cy="25" r="20" style="stroke:black; stroke-weight:.5px;" fill={swatch.url()}/>  
+    <svg width=45 height=45 bind:this={palette}>
+    <circle cx="25" cy="25" r="20" style="stroke:black; stroke-weight:.5px;" fill={swatch.url()} on:click={addPattern(c.name,swatch)}/>  
     </svg>
     </span>
     {/each}
+</div>
+{/each}
+{/await}
+<div id='textures'>
+
 </div>

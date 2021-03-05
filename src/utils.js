@@ -145,3 +145,84 @@ export const zenArray = (t) => {
     0
   ));
 }
+export const makeSVG = (svg, classes, width, height,path)=>{
+  const styles = classes
+  const groups = {}
+  let copySVG = document.createElement('svg')
+
+  copySVG.width=width
+  copySVG.height=height
+
+  styles.forEach(element => {
+    let selected = Array.from(svg.querySelectorAll(`.${element.name}`)).filter(s => s.getAttribute('d') != null)
+    if (typeof(selected[0]) != undefined && selected[0] != null){
+        let sample = selected[0]
+        let className = element.name
+        let getStyle = getComputedStyle(sample)
+        let groupName = selected[0].dataset.group
+        if (groupName != undefined && className != undefined){
+        selected.forEach(select =>{
+          // console.log(selected[0].dataset.group)
+          // console.log(select.dataset.group)
+          if (!groups[groupName]){
+            groups[groupName] = {};
+          } 
+          if (!groups[groupName][className]){
+
+          groups[groupName][className] = []
+          groups[groupName][className].push(`<path d=${select.getAttribute('d')} fill=${getStyle.fill.replace(/"/g,'')} stroke="${getStyle.stroke}"  stroke-width="${getStyle.strokeWidth}"></path>`)
+        
+        } else{
+          groups[groupName][className].push(`<path d=${select.getAttribute('d')} fill="${getStyle.fill.replace(/"/g,'')}" stroke="${getStyle.stroke}"  stroke-width="${getStyle.strokeWidth}"></path>`)
+        }
+      })
+        }
+      
+    }
+      });
+
+  Object.entries(groups).forEach(g =>{
+    console.log(g[1])
+    console.log(Object.entries(g[1]))
+    copySVG.insertAdjacentHTML('afterbegin', 
+    `<g id=${g[0]} inkscape:groupmode="layer" inkscape:label="${g[0]}">
+
+    ${Object.entries(g[1]).map(c => `<g id = ${c[0]}> ${c[1].join(' ')} </g>`)}  
+    </g>`)
+  })
+  let upload = svg.querySelector('.upload')
+  let style = getComputedStyle(upload)
+  if (typeof(upload) != undefined && upload != null){   
+    let uploaded = `<g id ="uploaded" inkscape:groupmode="layer" inkscape:label="uploaded"><path d="${upload.getAttribute('d')}" fill ="${style.fill.replace(/"/g,'')}" stroke="${style.stroke}" stroke-width="${style.strokeWidth}"></path></g>` 
+    copySVG.insertAdjacentHTML('beforeend', uploaded);
+  }
+  
+  let globe = svg.querySelector('#sphere')
+  if (globe){
+    const sphere = `<g id ="globe" inkscape:groupmode="layer" inkscape:label="sphere"><path class = "sphere" d="${path({type: "Sphere"})}" fill = "${getComputedStyle(globe).fill.replace(/"/g,'')}" stroke="${getComputedStyle(globe).stroke}" stroke-width="${getComputedStyle(globe).strokeWidth}"/></g>` 
+  copySVG.insertAdjacentHTML('afterbegin', sphere);
+  }
+
+  let defs= svg.querySelectorAll('defs')
+  if (defs !=null){
+    defs.forEach(d=>{
+      copySVG.insertAdjacentHTML('afterbegin', d.outerHTML);
+    }) 
+  }
+  
+
+  return copySVG.innerHTML
+}
+
+export const remove = (svg, className) =>{
+  let selected = svg.querySelectorAll(`.${className}`)
+  if (selected !=null){
+      let palette = document.querySelector(`#${className}Palette`)
+      selected.forEach(s => { s.remove();})
+      if (palette !=null){
+        palette.remove();
+      }
+
+  }
+
+ }
