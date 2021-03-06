@@ -39,6 +39,9 @@ return projections;
 
 }
 
+
+const dataSet = new Set(); 
+const xyzSet = new Set();
 export const getTiles = (projection, width, height) => {
   const tiles = [];
   let z;
@@ -74,13 +77,23 @@ export const getTiles = (projection, width, height) => {
       })
     })
   })
-
   return tiles;
 }
+
 export const tilePromise = t => {
   const mapTiles = Promise.all(t.map(async d => {
-    d.data = await d3.json(`https://tile.nextzen.org/tilezen/vector/v1/256/all/${d.z}/${d.x}/${d.y}.json?api_key=ztkh_UPOQRyakWKMjH_Bzg`);
-    return d;
+    // console.log(d)
+    if (xyzSet.has(d)) {
+      console.log('return from set')
+      return Array.from(dataSet).filter(s => s.x == d.x && s.y == d.y && s.z == d.z)
+     } else{
+      xyzSet.add(d)
+      // console.log('request data')
+      d.data = await d3.json(`https://tile.nextzen.org/tilezen/vector/v1/256/all/${d.z}/${d.x}/${d.y}.json?api_key=ztkh_UPOQRyakWKMjH_Bzg`);
+      dataSet.add(d)
+      return d;
+    }
+
   }))
   return mapTiles
 }
@@ -92,14 +105,14 @@ export const getClass = d => {
   return `${kind.replace('_','')}`;
 }
 
-export const sortTileData = (ti, rawdata) => {
+export const sortTileData = (ti) => {
   const tiles = ti.map(tile => {
     const mapTile = zenArray(tile).map(d => ({
       class: d.class,
       group: d.group,
       data: d
     }))
-    rawdata.push(mapTile)
+
    let flat =  mapTile.flat().sort((a, b) => (
       a.data.properties.sort_rank ?
       a.data.properties.sort_rank - b.data.properties.sort_rank :

@@ -199,8 +199,10 @@ export let drag = (projection) => {
     let v0, q0, r0, a0, l;
   
     function pointer(event, that) {
+      console.log(event)
+      console.log(that)
       const t = d3.pointers(event, that);
-  
+      console.log(t)
       if (t.length !== l) {
         l = t.length;
         if (l > 1) a0 = Math.atan2(t[1][1] - t[0][1], t[1][0] - t[0][0]);
@@ -221,11 +223,14 @@ export let drag = (projection) => {
     function dragstarted(event) {
       v0 = versor.cartesian(projection.invert(pointer(event, this)));
       q0 = versor(r0 = projection.rotate());
+      console.log(v0, q0)
     }
   
     function dragged(event) {
       const p = pointer(event, this);
+      console.log(p)
       const v1 = versor.cartesian(projection.rotate(r0).invert(p));
+      console.log(v1)
       const delta = versor.delta(v0, v1);
       let q1 = versor.multiply(q0, delta);
   
