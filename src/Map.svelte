@@ -4,9 +4,10 @@ import Palette from './Palette.svelte';
 import * as d3 from 'd3';
 import { projections, getTiles, sortTileData, tilePromise, makeSVG } from './utils'
 export let data, height, width, proj;
-let projection, path, tile, svg, z;
+let projection, path, tile, svg, z, reCenter;
 let arr = [];
 let classes=[]
+
 
 // to do: "cache" tiles, drag and zoom
 let m = { x: 0, y: 0};
@@ -16,11 +17,15 @@ async function tiles() {
        return tilePromise(getTiles(projection, width, height)).then(t => sortTileData(t, arr))
     }
 
+
+  // function render = () => {
+
+  // }
 onMount(async () => {
   let classSet = new Set();
   await tiles().then(t => t.map(ti => classSet.add(ti.class)))
 
-
+ 
   classes = [...classSet].map(c => {
     let el = document.querySelector(`.${c}`)
     if (el){ 
@@ -65,6 +70,9 @@ const download = (svgFile) => {
       link.click()
     }
 
+let render =() => {
+
+}
 
 $: {
   arr = []
@@ -73,7 +81,8 @@ $: {
   tile = tiles()
   z = getTiles(projection, width, height);
 
-}
+  console.log(projection.invert([m.x,m.y]))
+
 
 </script>
 
@@ -163,7 +172,7 @@ $: {
 }
 </style>
 <div width = {width}>
-<svg bind:this={svg} width = {width} height ={height} on:mousemove="{e => m = { x: e.clientX, y: e.clientY }}" on:>
+<svg bind:this={svg} width = {width} height ={height} on:mousemove="{e => m = { x: e.clientX, y: e.clientY }}">
     {#if z[0]}
     {#if z[0].z <= 5}
     <g id = "water">

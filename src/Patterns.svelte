@@ -42,7 +42,9 @@ onMount(async ()=> {
 </style>
 {#await classNames then cn}
 {#each cn as c}
-<div><pre><strong>{c.name}</strong></pre>
+<div>
+<pre><strong>{c.name}</strong></pre>
+    <div class="textures">
     {#each swatches as swatch}
     <span style="margin:1px;">
     <svg width=45 height=45 bind:this={palette}>
@@ -50,6 +52,7 @@ onMount(async ()=> {
     </svg>
     </span>
     {/each}
+    </div>
 </div>
 {/each}
 {/await}

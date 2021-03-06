@@ -8,14 +8,12 @@ export const projections = (mapData, width, height) => {
 const mapCentroid = center(mapData);
 let extent;
 if (mapData.geometry && mapData.geometry.type == "Point") {
-  console.log(mapData.geometry.type)
   extent = circle(mapCentroid, .2, {units: "miles"})
   extent.geometry.coordinates = [extent.geometry.coordinates[0].slice().reverse()]
 }else if (mapData.geometry && mapData.geometry.type == "Polygon"){
   extent = mapData; 
   extent.geometry.coordinates = [extent.geometry.coordinates[0].slice().reverse()]
 } else {
-  console.log('not a point')
   extent = mapData;
 }
 const projections =  [  

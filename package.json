@@ -29,6 +29,9 @@
     "d3-geo-projection": "^3.0.0",
     "d3-geo-zoom": "^1.4.1",
     "d3-inertia": "^0.4.0",
+    "d3-selection": "^2.0.0",
+    "d3-zoom": "^2.0.0",
+    "kapsule": "^1.13.3",
     "sirv-cli": "^1.0.0",
     "textures": "^1.2.2"
   }
