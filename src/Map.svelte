@@ -1,6 +1,6 @@
 <script>
 import { onMount } from 'svelte';
-import { drag } from './versor.js'
+import { drag } from './versor.js';
 import Palette from './Palette.svelte';
 import * as d3 from 'd3';
 import { projections, getTiles, sortTileData, tilePromise, makeSVG } from './utils'
@@ -18,15 +18,12 @@ async function tiles() {
     }
 
 let onMountProj
-  // function render = () => {
 
-  // }
-onMount(async () => {
-
-    let classSet = new Set();
+let getClasses = async () => {  
+   let classSet = new Set();
     await tiles().then(t => t.map(ti => classSet.add(ti.class)))
     
-    let classes = [...classSet].map(c => {
+    let arr = [...classSet].map(c => {
     let el = document.querySelector(`.${c}`)
     if (el){ 
       let style = getComputedStyle(el)
@@ -52,29 +49,27 @@ onMount(async () => {
       stroke: style.stroke, 
       strokeWidth: style.strokeWidth
       })
-    classes.push(obj)
+    arr.push(obj)
     }
   }
+  return arr;
+}
+
+
+
+onMount(async () => {
 
   projection = projections(data,width,height).map(p => Object.entries(p)).filter(m => m[0][0] == proj)[0][0][1]
   onMountProj = projection
   path = d3.geoPath().projection(projection)
-  let onMountZ = getTiles(projection, width, height);
   z = getTiles(projection, width, height);
   
   tile = tiles()
 
   let zoomed = async (transform) => {
-      // console.log(transform)
       projection.scale(transform.k)
       projection.translate([transform.x, transform.y])
       path = d3.geoPath().projection(projection)
-
-      let newZ = getTiles(projection, width, height);
-      if (newZ[0].z != z[0].z){
-        tile = tiles()
-        // z = getTiles(projection, width, height);
-      }
 
   }
   
@@ -82,10 +77,25 @@ onMount(async () => {
   // .scaleExtent([1,2])
   .extent([[0, 0], [width, height]])
   .on("zoom", ({transform}) => zoomed(transform))
+  .on("end", function(){
+    let newZ = getTiles(projection, width, height);
+      if (newZ[0].z != z[0].z){
+        tile = tiles()
+        classes = getClasses()
+        if (newZ[0].z > 5){
+          svg.querySelector('#sphere').style.setProperty('display', 'none')
+        } else {
+          svg.querySelector('#sphere').style.setProperty('display', '')
+        }
+        // z = getTiles(projection, width, height);
+      }
+  })
   
  
   d3.select(svg).call(zoom).call(zoom.transform, d3.zoomIdentity.translate(width/2, height/2).scale(onMountProj.scale()))
 
+
+  
 })  
 
 
@@ -105,10 +115,10 @@ $: {
   path = d3.geoPath().projection(projection)
   z = getTiles(projection, width, height);
   tile = tiles()
+  classes = getClasses()
+  // console.log(classes.length)
   // console.log(projection.invert([m.x,m.y]))
   // for svg tag => on:mousemove="{e => m = { x: e.clientX, y: e.clientY }}"
-
-
 }
 
 </script>
@@ -222,12 +232,11 @@ $: {
     </g>
     <!-- {/await} -->
     <path d = {path(data)} class="upload"/>
-
+  </svg>
 <hr>
 {#await classes then c}
 <button on:click={()=> download(makeSVG(svg, c, width, height,path))}>download SVG</button>
 <Palette c={c} svg = {svg}/>
 {/await}
 <!-- {/if} -->
-</svg>
 </div>

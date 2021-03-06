@@ -24,7 +24,6 @@
     grid-row-gap: 2px;
  }
 </style>
-{#await classNames then className}
 <pre><strong>uploaded data</strong></pre>
 <div class='laser'>
     {#each laserColors as laserColor}
@@ -36,7 +35,7 @@
     </div>
     {/each}
 </div>
-{#each className as c}
+{#each classNames as c}
 <pre><strong>{c.name}</strong></pre>
 <div class='laser'>
     {#each laserColors as laserColor}
@@ -50,13 +49,3 @@
      <div><pre>remove layer</pre><button on:click={remove(svg, c.name)}><pre>are you sure??</pre></button></div>
 </div> 
 {/each}
-{/await}
-
-
-<!-- Laser Cutter Palette:
- - 255 0 0 (red): cut (no fills!)
- - 0 0 255 (blue): dark engrave
- - 0 0 0 (black): light engrave
- - lines are 0.1px stroke
- - Pattern fills? 
--->

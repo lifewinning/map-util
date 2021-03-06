@@ -40,8 +40,7 @@ onMount(async ()=> {
  }
 
 </style>
-{#await classNames then cn}
-{#each cn as c}
+{#each classNames as c}
 <div>
 <pre><strong>{c.name}</strong></pre>
     <div class="textures">
@@ -55,7 +54,6 @@ onMount(async ()=> {
     </div>
 </div>
 {/each}
-{/await}
 <div id='textures'>
 
 </div>

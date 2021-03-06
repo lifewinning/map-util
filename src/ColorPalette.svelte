@@ -43,7 +43,6 @@ onMount(async ()=> {
     }
 
 </style>
-{#await classNames then cn}
 <div id="upload">
 <pre>your uploaded data</pre>
     <div class="pickers">
@@ -67,7 +66,8 @@ onMount(async ()=> {
         <!-- <div><pre>remove layer</pre><button on:click={remove('upload')}><pre>are you sure??</pre></button></div> -->
     </div>
 </div>
-{#each cn as c}
+
+{#each classNames as c}
 <div id = "{c.name}Palette">
 <pre><strong>{c.name}</strong></pre>
 <div class ="pickers">
@@ -115,7 +115,6 @@ onMount(async ()=> {
 </div>
 </div>
 {/each}
-{/await}
 
 
 
