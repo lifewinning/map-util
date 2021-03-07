@@ -1,6 +1,5 @@
 <script>
 import { onMount } from 'svelte';
-import { drag } from './versor.js';
 import Palette from './Palette.svelte';
 import * as d3 from 'd3';
 import { projections, getTiles, sortTileData, tilePromise, makeSVG } from './utils'
@@ -58,7 +57,6 @@ let getClasses = async () => {
 
 
 onMount(async () => {
-
   projection = projections(data,width,height).map(p => Object.entries(p)).filter(m => m[0][0] == proj)[0][0][1]
   onMountProj = projection
   path = d3.geoPath().projection(projection)
@@ -66,18 +64,36 @@ onMount(async () => {
   
   tile = tiles()
 
-  let zoomed = async (transform) => {
-      projection.scale(transform.k)
-      projection.translate([transform.x, transform.y])
-      path = d3.geoPath().projection(projection)
+  d3.select(svg).call(d3.drag().on('drag', (event) => {
+    const rotate = projection.rotate()
+    const k = 75/projection.scale()
+    projection.rotate([
+      rotate[0] + event.dx * k,
+      rotate[1] - event.dy * k
+    ])
+    path = d3.geoPath().projection(projection)
 
+  }).on('end', () => { 
+    let thisZ =  getTiles(projection, width, height);
+    if (!thisZ.some(r => z.includes(r))){
+      tile = tiles()
+    } else {
+      console.log('doing nothing idk')
+    }
+    })
+    )
+
+  let zoomed = async (transform) => {
+      projection.scale(transform.k/ (2*Math.PI))
+      // projection.translate([transform.x, transform.y])
+      path = d3.geoPath().projection(projection)
   }
   
   let zoom = d3.zoom()
-  // .scaleExtent([1,2])
+  .scaleExtent([1 << 10, 1 << 15])
   .extent([[0, 0], [width, height]])
   .on("zoom", ({transform}) => zoomed(transform))
-  .on("end", function(){
+  .on("end", () => {
     let newZ = getTiles(projection, width, height);
       if (newZ[0].z != z[0].z){
         tile = tiles()
@@ -93,7 +109,6 @@ onMount(async () => {
   
  
   d3.select(svg).call(zoom).call(zoom.transform, d3.zoomIdentity.translate(width/2, height/2).scale(onMountProj.scale()))
-
 
   
 })  
@@ -116,6 +131,7 @@ $: {
   z = getTiles(projection, width, height);
   tile = tiles()
   classes = getClasses()
+ 
   // console.log(classes.length)
   // console.log(projection.invert([m.x,m.y]))
   // for svg tag => on:mousemove="{e => m = { x: e.clientX, y: e.clientY }}"
@@ -216,17 +232,12 @@ $: {
     <g id = "water">
     <path class = "ocean" id= "sphere" d = { path(sphere) }  /> 
     </g>
-    {:else}
-    <g></g>
     {/if}  
     {/if}
-    <!-- {#await tile then t} -->
     <g id = 'basemap'>
     {#await tile then t}
     {#each t as paths}
-    {#if path(paths.data) != null}
     <path d = {path(paths.data)} data-group={paths.group} class={paths.class}/>
-    {/if}
     {/each}
     {/await}
     </g>
@@ -234,6 +245,7 @@ $: {
     <path d = {path(data)} class="upload"/>
   </svg>
 <hr>
+<button>enable zoom/pan</button>
 {#await classes then c}
 <button on:click={()=> download(makeSVG(svg, c, width, height,path))}>download SVG</button>
 <Palette c={c} svg = {svg}/>
