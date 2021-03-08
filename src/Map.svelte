@@ -59,8 +59,7 @@ let getClasses = async () => {
 onMount(async () => {
   projection = projections(data,width,height).map(p => Object.entries(p)).filter(m => m[0][0] == proj)[0][0][1]
   onMountProj = projection
-  path = d3.geoPath().projection(projection)
-  z = getTiles(projection, width, height);
+  path = d3.geoPath().projection(projection);
   
   tile = tiles()
 
@@ -72,8 +71,8 @@ onMount(async () => {
       rotate[1] - event.dy * k
     ])
     path = d3.geoPath().projection(projection)
-
   }).on('end', () => { 
+    console.log(projection.invert([width/2, height/2]))
     let thisZ =  getTiles(projection, width, height);
     if (!thisZ.some(r => z.includes(r))){
       tile = tiles()
@@ -84,32 +83,38 @@ onMount(async () => {
     )
 
   let zoomed = async (transform) => {
-      projection.scale(transform.k/ (2*Math.PI))
-      // projection.translate([transform.x, transform.y])
+      projection.scale(transform.k).translate([-transform.x, -transform.y]);
+      console.log(transform.k, transform.x, transform.y)
       path = d3.geoPath().projection(projection)
   }
   
   let zoom = d3.zoom()
-  .scaleExtent([1 << 10, 1 << 15])
-  .extent([[0, 0], [width, height]])
+  // .extent([[0, 0], [width, height]])
   .on("zoom", ({transform}) => zoomed(transform))
   .on("end", () => {
+    console.log(projection.invert([width/2, height/2]))
     let newZ = getTiles(projection, width, height);
+    if (z[0].z){
+    // console.log(z[0].z)
+    // console.log(newZ[0].z)
+    if (svg.querySelector('#sphere') != null){
+          if (newZ[0].z > 4 ){
+          svg.querySelector('#sphere').style.setProperty('display', 'none')
+          } else {
+          svg.querySelector('#sphere').style.setProperty('display', '')
+          // }
+          // z = getTiles(projection, width, height);
+        }
+     }
       if (newZ[0].z != z[0].z){
         tile = tiles()
         classes = getClasses()
-        if (newZ[0].z > 5){
-          svg.querySelector('#sphere').style.setProperty('display', 'none')
-        } else {
-          svg.querySelector('#sphere').style.setProperty('display', '')
-        }
-        // z = getTiles(projection, width, height);
-      }
-  })
+    }
+  
+  }})
   
  
-  d3.select(svg).call(zoom).call(zoom.transform, d3.zoomIdentity.translate(width/2, height/2).scale(onMountProj.scale()))
-
+  d3.select(svg).call(zoom.transform, d3.zoomIdentity.translate(width/2, height/2).scale(onMountProj.scale())).call(zoom)
   
 })  
 
@@ -228,7 +233,7 @@ $: {
 <svg bind:this={svg} width = {width} height ={height}>
 <!-- {#if tile} -->
     {#if z[0]}
-    {#if z[0].z <= 5}
+    {#if z[0].z <= 4}
     <g id = "water">
     <path class = "ocean" id= "sphere" d = { path(sphere) }  /> 
     </g>

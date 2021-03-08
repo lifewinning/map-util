@@ -6,6 +6,7 @@ import SphericalMercator from "@mapbox/sphericalmercator";
 
 export const projections = (mapData, width, height) => {
 const mapCentroid = center(mapData);
+// console.log(mapCentroid.geometry.coordinates)
 let extent;
 if (mapData.geometry && mapData.geometry.type == "Point") {
   extent = circle(mapCentroid, .2, {units: "miles"})
@@ -81,18 +82,18 @@ export const getTiles = (projection, width, height) => {
 }
 
 export const tilePromise = t => {
-  const mapTiles = Promise.all(t.map(async d => {
-    // console.log(d)
-    if (xyzSet.has(d)) {
-      console.log('return from set')
-      return Array.from(dataSet).filter(s => s.x == d.x && s.y == d.y && s.z == d.z)
-     } else{
-      xyzSet.add(d)
-      // console.log('request data')
-      d.data = await d3.json(`https://tile.nextzen.org/tilezen/vector/v1/256/all/${d.z}/${d.x}/${d.y}.json?api_key=ztkh_UPOQRyakWKMjH_Bzg`);
-      dataSet.add(d)
-      return d;
-    }
+  const mapTiles = Promise.all(t.map(async d => {  
+      const newCache = await caches.open('new-cache');
+      let url = `https://tile.nextzen.org/tilezen/vector/v1/256/all/${d.z}/${d.x}/${d.y}.json?api_key=ztkh_UPOQRyakWKMjH_Bzg`;
+      if (await newCache.match(url)){
+        let res = await newCache.match(url).then(response => response.body.getReader().read()).then(re =>  JSON.parse(new TextDecoder().decode(re.value)))
+        d.data = res
+        //console.log(res)
+      } else {
+        d.data = await d3.json(`https://tile.nextzen.org/tilezen/vector/v1/256/all/${d.z}/${d.x}/${d.y}.json?api_key=ztkh_UPOQRyakWKMjH_Bzg`);
+        newCache.add(`https://tile.nextzen.org/tilezen/vector/v1/256/all/${d.z}/${d.x}/${d.y}.json?api_key=ztkh_UPOQRyakWKMjH_Bzg`);
+      }
+     return d;
 
   }))
   return mapTiles
