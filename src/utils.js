@@ -32,8 +32,11 @@ const projections =  [
 
   {"BerghausStar": d3proj.geoBerghaus().center(mapCentroid.geometry.coordinates).translate([width / 4, height / 4]).rotate([-mapCentroid.geometry.coordinates[0], -mapCentroid.geometry.coordinates[1]]).clipExtent([[0, 0],[width, height]]).fitExtent([[width * .05, height * .05],[width - (width * .05), height - (height * .05)]],extent)},
 
-  {"Mollweide": d3proj.geoMollweide().center(mapCentroid.geometry.coordinates).translate([width / 4, height / 4]).rotate([-mapCentroid.geometry.coordinates[0], -mapCentroid.geometry.coordinates[1]]).clipExtent([[0, 0],[width, height]]).fitExtent([[width * .05, height * .05],[width - (width * .05), height - (height * .05)]],extent)}
-  // "equirectangular": d3.geoEquirectangular().translate([0, 0]).center(mapCentroid.geometry.coordinates).fitExtent([[width * .05, height * .05],[width - (width * .05), height - (height * .05)]],mapData)
+  {"Mollweide": d3proj.geoMollweide().center(mapCentroid.geometry.coordinates).translate([width / 4, height / 4]).rotate([-mapCentroid.geometry.coordinates[0], -mapCentroid.geometry.coordinates[1]]).clipExtent([[0, 0],[width, height]]).fitExtent([[width * .05, height * .05],[width - (width * .05), height - (height * .05)]],extent)},
+  
+  {"Equirectangular": d3.geoEquirectangular().translate([0, 0]).center(mapCentroid.geometry.coordinates).fitExtent([[width * .05, height * .05],[width - (width * .05), height - (height * .05)]],extent)},
+ 
+  {"Mercator": d3.geoMercator().translate([0, 0]).center(mapCentroid.geometry.coordinates).fitExtent([[width * .05, height * .05],[width - (width * .05), height - (height * .05)]],extent)}
 ]
 
 return projections;
@@ -55,7 +58,7 @@ export const getTiles = (projection, width, height) => {
   // this is suboptimal
   let upperbound;
   let lowerbound;
-  if (z < 5) {
+  if (z <= 5) {
     upperbound = [-180, 90]
     lowerbound = [180, -180]
   } else {
@@ -83,15 +86,21 @@ export const getTiles = (projection, width, height) => {
 
 export const tilePromise = t => {
   const mapTiles = Promise.all(t.map(async d => {  
-      const newCache = await caches.open('new-cache');
+      const tiles = await caches.open('tiles');
+      // console.log(tiles)
       let url = `https://tile.nextzen.org/tilezen/vector/v1/256/all/${d.z}/${d.x}/${d.y}.json?api_key=ztkh_UPOQRyakWKMjH_Bzg`;
-      if (await newCache.match(url)){
-        let res = await newCache.match(url).then(response => response.body.getReader().read()).then(re =>  JSON.parse(new TextDecoder().decode(re.value)))
-        d.data = res
-        //console.log(res)
+      if (await tiles.match(url)){
+        let res = await tiles.match(url).then(
+          response => response.body.getReader().read()).then(
+            re => JSON.parse(new TextDecoder().decode(re.value))).catch(error => Error)
+        if (res instanceof Error){ 
+          d.data = await d3.json(`https://tile.nextzen.org/tilezen/vector/v1/256/all/${d.z}/${d.x}/${d.y}.json?api_key=ztkh_UPOQRyakWKMjH_Bzg`);
+        } else {
+         d.data = res 
+        }  
       } else {
         d.data = await d3.json(`https://tile.nextzen.org/tilezen/vector/v1/256/all/${d.z}/${d.x}/${d.y}.json?api_key=ztkh_UPOQRyakWKMjH_Bzg`);
-        newCache.add(`https://tile.nextzen.org/tilezen/vector/v1/256/all/${d.z}/${d.x}/${d.y}.json?api_key=ztkh_UPOQRyakWKMjH_Bzg`);
+        tiles.add(`https://tile.nextzen.org/tilezen/vector/v1/256/all/${d.z}/${d.x}/${d.y}.json?api_key=ztkh_UPOQRyakWKMjH_Bzg`);
       }
      return d;
 

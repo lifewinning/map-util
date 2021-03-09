@@ -8,8 +8,8 @@ let projection, path, tile, svg, z, reCenter, pathed;
 let classes=[]
 
 
-// to do: "cache" tiles, drag and zoom
-let m = { x: 0, y: 0};
+// to do: drag and zoom
+// let m = { x: 0, y: 0};
 let sphere = ({type: "Sphere"})
 
 async function tiles() {
@@ -83,13 +83,13 @@ onMount(async () => {
     )
 
   let zoomed = async (transform) => {
-      projection.scale(transform.k).translate([-transform.x, -transform.y]);
-      console.log(transform.k, transform.x, transform.y)
+      projection.scale(transform.k)
+      // console.log(transform.k, transform.x, transform.y)
       path = d3.geoPath().projection(projection)
   }
   
   let zoom = d3.zoom()
-  // .extent([[0, 0], [width, height]])
+  .extent([[0, 0], [width, height]])
   .on("zoom", ({transform}) => zoomed(transform))
   .on("end", () => {
     console.log(projection.invert([width/2, height/2]))
@@ -98,13 +98,17 @@ onMount(async () => {
     // console.log(z[0].z)
     // console.log(newZ[0].z)
     if (svg.querySelector('#sphere') != null){
-          if (newZ[0].z > 4 ){
+          if (newZ[0].z >= 5 ){
           svg.querySelector('#sphere').style.setProperty('display', 'none')
           } else {
           svg.querySelector('#sphere').style.setProperty('display', '')
           // }
           // z = getTiles(projection, width, height);
         }
+     } else {
+      if (newZ[0].z < 5 ){
+        d3.select('#globe').append('path').attr("class","ocean").attr('id','sphere').attr('d', path(sphere))
+      }
      }
       if (newZ[0].z != z[0].z){
         tile = tiles()
@@ -232,13 +236,13 @@ $: {
 <div width = {width}>
 <svg bind:this={svg} width = {width} height ={height}>
 <!-- {#if tile} -->
-    {#if z[0]}
-    {#if z[0].z <= 4}
-    <g id = "water">
+<g id = "globe">
+    {#if z[0]} 
+    {#if z[0].z <= 5}
     <path class = "ocean" id= "sphere" d = { path(sphere) }  /> 
-    </g>
     {/if}  
     {/if}
+  </g>
     <g id = 'basemap'>
     {#await tile then t}
     {#each t as paths}
